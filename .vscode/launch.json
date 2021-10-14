@@ -17,8 +17,8 @@
             "request": "launch",
             "mainClass": "App",
             "projectName": "ExternalSort_d9dcb0c9",
-            "vmArgs": "-Xmx100m",
-            "args": "fileVerySmall50.txt"
+            "vmArgs": "-Xmx5m",
+            "args": "file1000000.txt"
         }
     ]
 }
