@@ -9,35 +9,45 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.*;
 
-public class App 
-{
+public class App{
+
+    // A static disk IO counter. It will be used everywhere we read 
+    // or write a line to a file.
+    public static IOCounter dskAccessCounter = new IOCounter();
     public static void main(String[] args) throws Exception 
     {
-    	
-    	long startTime = System.nanoTime();
-        // get this argument from the cmd arguments.
-        //String inputFileName = "fileSmall.txt";
+        // Clean the output directory before starting.
+    	App.cleanOutputDirectory();
+        
         String inputFileName = args[0];
-
         File inputFile = new File(Constants.INPUT_PATH + inputFileName);
         BufferedReader inputFileReader = new BufferedReader(new FileReader(inputFile));
 
-        // Basically the size of a file.
+        // Timing starts here.
+    	long startTime = System.nanoTime();
+        
+        // Calculating the size of a tmp file or run.
         long runSize = Utils.estimateBestRunSize(Utils.getApproximateMemoryAvailable(), inputFile.length());       
         
-        // Save the pointers to all the files.
-        ArrayList<File> files = new ArrayList<>();
+        // Save the pointers to all the tmp files generated in phase 1.
+        List<File> files = new ArrayList<>();
 
-        // buffer for individual files.
-        ArrayList<String> buffer = new ArrayList<>();
+        // buffer for individual runs.
+        List<String> buffer = new ArrayList<>();
 
-        int bufferRecordCount = 0; // hack, will be used phase 2.
+        // hack, will be used phase 2.
+        // Do not remove this variable or 
+        // phase two will fail.
+        int bufferRecordCount = 0;
         
         try{
             String currentRecord = ""; 
             while (currentRecord != null){
                 long bufferSize = 0;
                 while ((bufferSize < runSize) && ((currentRecord = inputFileReader.readLine()) != null)){
+                    // increment for the readLine.
+                    App.dskAccessCounter.incrementCounter();
+
                     buffer.add(currentRecord);
                     bufferSize += Constants.RECORD_SIZE_IN_BYTES;
                 }
@@ -47,61 +57,39 @@ public class App
                     bufferRecordCount = buffer.size();
                 }
                 //reset the buffer.
-                buffer = new ArrayList<>();
+                buffer.clear();
             }
 
         } finally {
             inputFileReader.close();
         }
-        
 
-
-
-        // int batch = 0;
-        // String fileName = "";
-        // for (int i = 1; i <= 50; i++){
-        //     if (i % 10 == 0){
-        //         batch++;
-        //         fileName = "C:\\Users\\akhil\\Desktop\\ExternalSort\\Output\\" + String.valueOf(batch) + "tmp.txt";
-        //         buffer.add(reader.readLine());
-        //         App.writeLinesToFile(buffer, fileName);
-        //         buffer = new ArrayList<>();            
-            
-        //     } else {
-        //         buffer.add(reader.readLine());
-        //     }
-        // }
-
-        // reader.close();
-        
-        
         // At this point we have sorted bins, if I may.
-        // So I will have to get a hold of all the files.
+        // In addition, I also have a List of references 
+        // to all the temp files.
         // PHASE : 2
 
-        /////
-        // I now have a list of Files.
-
+        // This priority queue will be used for merging the sorted runs stored in the tmp files.
         PriorityQueue<BufferedReaderWrapper> pq = new PriorityQueue<>(new BufferedReaderComparator());
-
-        // for (int i = 1; i <= totalFiles; i++){
-        //     String fileAddress = baseAddress + String.valueOf(i) + "tmp.txt";
-        //     BufferedReaderWrapper bwr = new BufferedReaderWrapper(new BufferedReader(new FileReader(fileAddress)));
-        //     pq.add(bwr);
-        // }
-
-        // Add the bufferedRecordWrappers to the priorityQueue
-        for (File tmpF: files){
-            BufferedReaderWrapper bwr = new BufferedReaderWrapper(new BufferedReader(new FileReader(tmpF)));
-            pq.add(bwr);
+        ListIterator<File> iter = files.listIterator();
+        BufferedReaderWrapper bwr = null;
+        while(iter.hasNext()){
+            bwr = new BufferedReaderWrapper(new BufferedReader(new FileReader(iter.next())));
+            if (bwr.peek() != null){
+                pq.add(bwr);
+            
+            } else{
+                // The file held by this buffer does not have any records.
+                bwr.close();
+            }
+            
+            //finally remove the File from the `files` list. (Maybe it helps in th saving the space. Maybe.)
+            iter.remove();
         }
 
-        // Now the priority queue has all the readers based on the first elements.
-        // The merging will now start.
-        // ArrayList<String> mergeBuffer = new ArrayList<>();
-        // use the same buffer.
+        // the priority queue will now have all the BufferedReaders sorted based on the
+        // next lines in their respective first records.
 
-        //String finalFileName = "C:\\Users\\akhil\\Desktop\\ExternalSort\\Output\\final_file.txt";
         File outputFile = new File(Constants.OUTPUT_PATH, Constants.OUTPUT_FILE_NAME);
         String outputFileName = outputFile.toPath().toAbsolutePath().toString();
 
@@ -110,10 +98,13 @@ public class App
         while (pq.size() > 0){
             BufferedReaderWrapper b = pq.poll();
             String record = b.poll();
+            
             if(!duplicateHolder.equals(record)){
                 buffer.add(record);
                 duplicateHolder = record;
-            }            
+            } else {
+                System.out.println("    >>Found Duplicate record: " + record);
+            }
 
             if(b.peek() != null){
                 // if the bufferReaderwrapper is not empty, add it back.
@@ -127,21 +118,50 @@ public class App
             if (buffer.size() == bufferRecordCount){
                 App.writeLinesToFile(buffer, outputFileName, true);
                 // reset the merge buffer.
-                buffer = new ArrayList<>();
-            }
-
-            if (pq.peek() == null && buffer.size() > 0){
-                App.writeLinesToFile(buffer, outputFileName, true);
+                buffer.clear();
             }
         }
+
+        // For the last buffer that may not be full.
+        if (buffer.size() > 0){
+            App.writeLinesToFile(buffer, outputFileName, true);
+            buffer.clear();
+        }
+
         long endTime = System.nanoTime();
         long timeElapsed = endTime - startTime;
-        System.out.println("Execution time in nanoseconds: " + timeElapsed);
+        System.out.println("==========================");
+        System.out.println("Execution Complete:");
         System.out.println("Execution time in milliseconds: " + timeElapsed / 1000000);
+        System.out.println("Number of disk IOs: " + App.dskAccessCounter.getCounter());
+        System.out.println("==========================");
+    }
+
+    public static void cleanOutputDirectory(){
+        cleanOutputDirectory(false);
+    }
+
+    public static void cleanOutputDirectory(boolean tmp){
+        System.out.println("==========================");
+        System.out.println("Cleaning artifacts from previous executions...");
+        File tmpFile = null;
+        if (tmp){
+            tmpFile = new File(Constants.TEMP_FILE_PATH);
+            if (tmpFile.delete()){
+                System.out.println(">Removed the tmp directory.");
+            }
+        }
+
+        tmpFile = new File(Constants.OUTPUT_PATH, Constants.OUTPUT_FILE_NAME);
+        if (tmpFile.delete()){
+            System.out.println(">Removed the stale output file.");
+        }
+        System.out.println("Clean up complete...");
+        System.out.println("==========================");
     }
 
 
-    public static void writeLinesToFile(ArrayList<String> recordList, String fileName, boolean append){
+    public static void writeLinesToFile(List<String> recordList, String fileName, boolean append){
         
         String finalAddress = fileName;
 
@@ -152,6 +172,7 @@ public class App
             for (String record: recordList){
                 bw.write(record);
                 bw.newLine();
+                App.dskAccessCounter.incrementCounter();
             }
          
             bw.close();
@@ -160,7 +181,7 @@ public class App
         }
     }
 
-    public static File writeTmpRecordToFile(ArrayList<String> recordList) throws IOException{
+    public static File writeTmpRecordToFile(List<String> recordList) throws IOException{
         File tmpDirectory = new File(Constants.TEMP_FILE_PATH);
         tmpDirectory.mkdirs();
         File tmpRecordFile = File.createTempFile("tmp", ".txt", tmpDirectory);
@@ -175,6 +196,7 @@ public class App
             for (String record: recordList){
                 tempFileWriter.write(record);
                 tempFileWriter.newLine();
+                App.dskAccessCounter.incrementCounter();
             }
         }
         

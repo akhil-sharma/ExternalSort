@@ -22,8 +22,10 @@ public class BufferedReaderWrapper {
     private void readNextLine(){
         try{
             this.line = bufferedReader.readLine();
+            App.dskAccessCounter.incrementCounter();
         } catch(IOException e){
             System.out.println("Exception in BuferedReader Wrapper.");
+            this.line = null;
         }
     }
     
