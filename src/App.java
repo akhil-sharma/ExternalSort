@@ -9,11 +9,15 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.*;
 
-public class App {
-    public static void main(String[] args) throws Exception {
-
+public class App 
+{
+    public static void main(String[] args) throws Exception 
+    {
+    	
+    	long startTime = System.nanoTime();
         // get this argument from the cmd arguments.
-        String inputFileName = "file1000000.txt";
+        //String inputFileName = "fileSmall.txt";
+        String inputFileName = args[0];
 
         File inputFile = new File(Constants.INPUT_PATH + inputFileName);
         BufferedReader inputFileReader = new BufferedReader(new FileReader(inputFile));
@@ -130,6 +134,10 @@ public class App {
                 App.writeLinesToFile(buffer, outputFileName, true);
             }
         }
+        long endTime = System.nanoTime();
+        long timeElapsed = endTime - startTime;
+        System.out.println("Execution time in nanoseconds: " + timeElapsed);
+        System.out.println("Execution time in milliseconds: " + timeElapsed / 1000000);
     }
 
 
@@ -154,7 +162,7 @@ public class App {
 
     public static File writeTmpRecordToFile(ArrayList<String> recordList) throws IOException{
         File tmpDirectory = new File(Constants.TEMP_FILE_PATH);
-        tmpDirectory.mkdir();
+        tmpDirectory.mkdirs();
         File tmpRecordFile = File.createTempFile("tmp", ".txt", tmpDirectory);
         tmpRecordFile.deleteOnExit();
 
