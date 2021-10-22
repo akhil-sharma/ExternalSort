@@ -18,7 +18,7 @@
             "mainClass": "App",
             "projectName": "ExternalSort_d9dcb0c9",
             "vmArgs": "-Xmx5m",
-            "args": "file1000000.txt"
+            "args": "\"input_1M records.txt\""
         }
     ]
 }

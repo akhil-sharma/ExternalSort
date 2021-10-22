@@ -94,7 +94,7 @@ public class App{
         String outputFileName = outputFile.toPath().toAbsolutePath().toString();
 
         String duplicateHolder = "";
-
+        int duplicateCount = 0;
         while (pq.size() > 0){
             BufferedReaderWrapper b = pq.poll();
             String record = b.poll();
@@ -103,7 +103,8 @@ public class App{
                 buffer.add(record);
                 duplicateHolder = record;
             } else {
-                System.out.println("    >>Found Duplicate record: " + record);
+                // System.out.println("    >>Found Duplicate record: " + record);
+                duplicateCount++;
             }
 
             if(b.peek() != null){
@@ -130,6 +131,7 @@ public class App{
 
         long endTime = System.nanoTime();
         long timeElapsed = endTime - startTime;
+        System.out.println("Duplicate records found: " + duplicateCount);
         System.out.println("==========================");
         System.out.println("Execution Complete:");
         System.out.println("Execution time in milliseconds: " + timeElapsed / 1000000);
