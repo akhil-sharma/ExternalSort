@@ -22,6 +22,12 @@ public class App{
         String inputFileName = args[0];
         File inputFile = new File(Constants.INPUT_PATH + inputFileName);
         BufferedReader inputFileReader = new BufferedReader(new FileReader(inputFile));
+        
+        // Testing purposes.
+        boolean verbose = false;
+        if (args.length == 2 && args[1].equals("v")){
+            verbose = true;
+        }
 
         // Timing starts here.
     	long startTime = System.nanoTime();
@@ -103,8 +109,11 @@ public class App{
                 buffer.add(record);
                 duplicateHolder = record;
             } else {
-                // System.out.println("    >>Found Duplicate record: " + record);
                 duplicateCount++;
+                // print the duplicate records if the verbose key was added.
+                if (verbose){
+                    System.out.println("    >>Found Duplicate record: " + record);
+                }
             }
 
             if(b.peek() != null){
