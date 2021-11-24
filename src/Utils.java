@@ -9,8 +9,6 @@ public class Utils {
      * @return The presumably free memory.
      */
     public static long getApproximateMemoryAvailable(){
-        // explicit  call to the garbage collector
-        // before memory making memory estimates.
         long maxMemory = Runtime.getRuntime().maxMemory();
         long totalMemory = Runtime.getRuntime().totalMemory();
         long freeMemory = Runtime.getRuntime().freeMemory();

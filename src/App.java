@@ -33,7 +33,9 @@ public class App{
     	long startTime = System.nanoTime();
         
         // Calculating the size of a tmp file or run.
-        long runSize = Utils.estimateBestRunSize(Utils.getApproximateMemoryAvailable(), inputFile.length());       
+        long runSize = Utils.estimateBestRunSize(Utils.getApproximateMemoryAvailable(), inputFile.length()); 
+        
+        System.out.println("Runsize: " + runSize);
         
         // Save the pointers to all the tmp files generated in phase 1.
         List<File> files = new ArrayList<>();
