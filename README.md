@@ -1,18 +1,35 @@
+# Duplicate Elimination using The Two-Pass Multiway Merge Sort
+
+Using `jdk-11.0.11.9-hotspot`
+
 ## Folder Structure
-
-The workspace contains two folders by default, where:
-
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+- `src`: The folder to maintain sources.
+- `output`: The sorted relation with distinct records is stored in this folder.
+- `input`: Program looks for the specified relation in this folder.
 
 Meanwhile, the compiled output files will be generated in the `bin` folder by default.
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+## Execution Parameters
 
-# A decent starting point
-> Needs to be tested by varying the sizes (memory and recoord count)
+The execution parameters such as the available memeory size and command line arguments can be modified in the `.vscode/launch.json`.
 
-# Before running App.java
-1. Delete the files in the output directory.
-2. Make sure that the input files are present in the input directory. (currently 3).
-only the file: fileVerySmall50.txt has duplicates.
+## Running the code
+
+There are two primary ways in which we can run this program.
+
+    1. Simply use the `run java` button in vscode. This method will run the program according to the configurations specified in `.vscode/launch.json`.
+
+    2. Manual compilation of the src.
+        > javac -d ./bin  src/*.java
+        This will save the generated bin files in the `bin` directory.
+
+        > java -classpath bin App fileSmall.txt
+        Here, `fileSmall.txt` contains the input relation and is located in the `input` directory.
+
+<b>Note</b>: All the input files are expected to be in the input directory. This behavior may later be changed to allow input files from any location.
+
+## Command Line Arguments
+
+1. `filename`: The program expects the first command line argument to be the name of file containing the relation. This file must be located in the `input` directory. 
+
+2. `v`: Verbose. Optional argument to display all the duplicated records as they are found.

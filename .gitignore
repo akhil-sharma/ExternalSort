@@ -1,2 +1,2 @@
-bin
+bin/*
 output/SORTED_DISTINCT_OUTPUT.txt
