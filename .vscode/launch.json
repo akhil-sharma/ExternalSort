@@ -17,8 +17,8 @@
             "request": "launch",
             "mainClass": "App",
             "projectName": "ExternalSort_d9dcb0c9",
-            "vmArgs": "-Xmx2M",
-            "args": ["input_1M records.txt"]
+            "vmArgs": "-Xmx5M",
+            "args": ["input_1M records.txt", "v"]
         }
     ]
 }
